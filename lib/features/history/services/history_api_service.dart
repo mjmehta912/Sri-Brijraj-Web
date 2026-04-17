@@ -58,4 +58,25 @@ class HistoryService {
       throw 'Failed to download PDF';
     }
   }
+
+  static Future<void> deleteSlip({
+    required String slipNo,
+  }) async {
+    final url = Uri.parse('$kBaseUrl/data/delete');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'SlipNo': slipNo}),
+    );
+
+    if (response.statusCode != 200) {
+      try {
+        final decoded = json.decode(response.body);
+        throw decoded['message'] ?? decoded['error'] ?? 'Failed to delete slip';
+      } catch (_) {
+        throw 'Failed to delete slip (${response.statusCode}): ${response.body}';
+      }
+    }
+  }
 }

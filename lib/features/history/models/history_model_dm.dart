@@ -23,15 +23,15 @@ class HistoryModelDm {
 
   factory HistoryModelDm.fromJson(Map<String, dynamic> json) {
     return HistoryModelDm(
-      slipNo: json['slipNo'],
-      date: json['date'],
+      slipNo: json['slipNo'] ?? '',
+      date: json['date'] ?? '',
       pname: json['pname'] ?? '',
-      vehicleNo: json['vehicleNo'],
-      transporter: json['transporter'],
+      vehicleNo: json['vehicleNo'] ?? '',
+      transporter: json['transporter'] ?? '',
       remark: json['remark'] ?? '',
-      entryDateTime: json['entryDateTime'],
+      entryDateTime: json['entryDateTime'] ?? '',
       user: json['user'] ?? '',
-      items: (json['items'] as List)
+      items: (json['items'] as List? ?? [])
           .map(
             (item) => HistoryItemDm.fromJson(item),
           )
@@ -51,8 +51,8 @@ class HistoryItemDm {
 
   factory HistoryItemDm.fromJson(Map<String, dynamic> json) {
     return HistoryItemDm(
-      iname: json['iname'],
-      qty: json['qty'],
+      iname: json['iname'] ?? '',
+      qty: json['qty'] ?? '',
     );
   }
 }

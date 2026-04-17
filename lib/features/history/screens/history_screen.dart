@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sri_brijraj_web/constants/color_constants.dart';
+import 'package:sri_brijraj_web/features/add_entry/screens/edit_entry_screen.dart';
 import 'package:sri_brijraj_web/features/history/controllers/history_controller.dart';
 import 'package:sri_brijraj_web/features/history/models/history_model_dm.dart';
 import 'package:sri_brijraj_web/styles/textstyles.dart';
@@ -72,17 +73,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         );
                       }
 
-                      return ListView.builder(
-                        controller: _controller.scrollController,
-                        itemCount: _controller.historyList.length,
-                        itemBuilder: (context, index) {
-                          final history = _controller.historyList[index];
-                          return HistoryCard(
-                            history: history,
-                            isWideScreen: screenWidth > 600,
-                            controller: _controller,
-                          );
-                        },
+                      return Obx(
+                        () => ListView.builder(
+                          controller: _controller.scrollController,
+                          itemCount: _controller.historyList.length,
+                          itemBuilder: (context, index) {
+                            final history = _controller.historyList[index];
+                            return HistoryCard(
+                              history: history,
+                              isWideScreen: screenWidth > 600,
+                              controller: _controller,
+                              canEdit: _controller.canEdit.value,
+                              canDelete: _controller.canDelete.value,
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
@@ -102,11 +107,15 @@ class HistoryCard extends StatelessWidget {
     required this.history,
     required this.isWideScreen,
     required HistoryController controller,
+    this.canEdit = false,
+    this.canDelete = false,
   }) : _controller = controller;
 
   final HistoryModelDm history;
   final HistoryController _controller;
   final bool isWideScreen;
+  final bool canEdit;
+  final bool canDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -114,14 +123,14 @@ class HistoryCard extends StatelessWidget {
       color: kColorwhite,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: kColorBlack, width: 1),
+        side: const BorderSide(color: kColorBlack, width: 1),
       ),
       child: Padding(
         padding: AppPaddings.p16,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Slip Number and Print Icon
+            // Slip Number + Print / Edit / Delete icons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -132,9 +141,76 @@ class HistoryCard extends StatelessWidget {
                     color: kColorPrimary,
                   ),
                 ),
-                IconButton(
-                  onPressed: () => _controller.viewPdf(slipNo: history.slipNo),
-                  icon: Icon(Icons.print, color: kColorPrimary, size: 24),
+                Row(
+                  children: [
+                    // Print
+                    IconButton(
+                      onPressed: () =>
+                          _controller.viewPdf(slipNo: history.slipNo),
+                      icon: const Icon(
+                        Icons.print,
+                        color: kColorPrimary,
+                        size: 24,
+                      ),
+                      tooltip: 'Print',
+                    ),
+
+                    // Edit
+                    if (canEdit)
+                      IconButton(
+                        onPressed: () {
+                        Get.to(() => EditEntryScreen(history: history));
+                        },
+                        icon: const Icon(
+                          Icons.edit,
+                          color: kColorPrimary,
+                          size: 24,
+                        ),
+                        tooltip: 'Edit',
+                      ),
+
+                    // Delete
+                    if (canDelete)
+                      IconButton(
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Slip'),
+                              content: Text(
+                                'Are you sure you want to delete slip "${history.slipNo}"?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(ctx).pop(true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            _controller.deleteHistory(
+                              slipNo: history.slipNo,
+                            );
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                          size: 24,
+                        ),
+                        tooltip: 'Delete',
+                      ),
+                  ],
                 ),
               ],
             ),

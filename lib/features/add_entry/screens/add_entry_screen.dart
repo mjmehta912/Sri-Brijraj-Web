@@ -689,7 +689,7 @@ class _AddEntryScreenState extends State<AddEntryScreen> {
                                                   ),
                                                   AppSpaces.h10,
                                                   SizedBox(
-                                                    width: 0.25.screenWidth,
+                                                    width: 0.075.screenWidth,
                                                     child: Text(
                                                       item['INAME'] ==
                                                                   'Petrol' ||

@@ -1,11 +1,13 @@
-import 'package:flutter/foundation.dart'; // Import for kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:sri_brijraj_web/features/history/models/history_model_dm.dart';
 import 'package:sri_brijraj_web/features/history/screens/pdf_screen.dart';
 import 'package:sri_brijraj_web/features/history/services/history_api_service.dart';
+import 'package:sri_brijraj_web/features/user_management/services/user_mangement_service.dart';
 import 'package:sri_brijraj_web/utils/alert_message_utils.dart';
-import 'package:sri_brijraj_web/utils/web_utils.dart'; // Helper for Web PDF
+import 'package:sri_brijraj_web/utils/web_utils.dart';
 
 class HistoryController extends GetxController {
   var isLoading = false.obs;
@@ -18,14 +20,40 @@ class HistoryController extends GetxController {
   var searchQuery = ''.obs;
   var historyList = <HistoryModelDm>[].obs;
 
+  var canEdit = false.obs;
+  var canDelete = false.obs;
+
   final ScrollController scrollController = ScrollController();
 
   @override
   void onInit() {
     super.onInit();
+    loadUserAccess();
     fetchSlipHistory();
     debounceSearchQuery();
     scrollController.addListener(_scrollListener);
+  }
+
+  Future<void> loadUserAccess() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final String? userIdStr = await storage.read(key: 'userId');
+      if (userIdStr == null) return;
+
+      final int currentUserId = int.parse(userIdStr);
+      final accessData = await UserManagementService.fetchUserAccess(
+        userId: currentUserId,
+      );
+
+      canEdit.value = accessData.any(
+        (a) => a.menuName.toLowerCase() == 'edit record' && a.access,
+      );
+      canDelete.value = accessData.any(
+        (a) => a.menuName.toLowerCase() == 'delete record' && a.access,
+      );
+    } catch (e) {
+      // silently fail
+    }
   }
 
   void debounceSearchQuery() {
@@ -57,6 +85,7 @@ class HistoryController extends GetxController {
         currentPage = 1;
         historyList.clear();
         hasMoreData.value = true;
+        await loadUserAccess();
       } else {
         isLoadingMore.value = true;
       }
@@ -89,13 +118,24 @@ class HistoryController extends GetxController {
 
       if (pdfBytes != null && pdfBytes.isNotEmpty) {
         if (kIsWeb) {
-          // **Web: Convert to Blob URL and Open**
           WebUtils.openPdfInNewTab(pdfBytes);
         } else {
-          // **Mobile: Navigate to PdfScreen**
           Get.to(() => PdfScreen(pdfBytes: pdfBytes, title: slipNo));
         }
       }
+    } catch (e) {
+      showErrorDialog('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteHistory({required String slipNo}) async {
+    try {
+      isLoading.value = true;
+      await HistoryService.deleteSlip(slipNo: slipNo);
+      historyList.removeWhere((h) => h.slipNo == slipNo);
+      showSuccessDialog('Deleted', 'Slip deleted successfully.');
     } catch (e) {
       showErrorDialog('Error', e.toString());
     } finally {

@@ -104,6 +104,7 @@ class AddEntryService {
   }
 
   static Future<String> addEntry({
+    String slipNo = '',
     required String date,
     required String transporter,
     required String pname,
@@ -132,6 +133,7 @@ class AddEntryService {
       'Remark': remark,
       'UserId': userId,
       'data': items,
+      if (slipNo.isNotEmpty) 'SlipNo': slipNo,
     };
 
     final response = await http.post(

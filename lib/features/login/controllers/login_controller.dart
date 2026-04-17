@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:sri_brijraj_web/features/login/services/login_service.dart';
+import 'package:sri_brijraj_web/features/user_management/services/user_mangement_service.dart';
 import 'package:sri_brijraj_web/features/web_nav/screens/web_nav_screen.dart';
 import 'package:sri_brijraj_web/utils/alert_message_utils.dart';
 
@@ -62,6 +63,19 @@ class LoginController extends GetxController {
         await secureStorage.write(
           key: 'userId',
           value: response['userID'].toString(),
+        );
+
+        // ADD THIS BLOCK
+        final userId = response['userID'] as int;
+        final accessList = await UserManagementService.fetchUserAccess(
+          userId: userId,
+        );
+        final hasUserMgmtAccess = accessList.any(
+          (a) => a.menuName.toLowerCase() == 'user rights' && a.access,
+        );
+        await secureStorage.write(
+          key: 'hasUserMgmtAccess',
+          value: hasUserMgmtAccess.toString(),
         );
       }
 

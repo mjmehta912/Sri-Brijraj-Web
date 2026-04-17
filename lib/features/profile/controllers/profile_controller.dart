@@ -10,30 +10,27 @@ class ProfileController extends GetxController {
   var fullName = ''.obs;
   var userName = ''.obs;
 
+  var hasUserMgmtAccess = false.obs; // ADD THIS
+
   Future<void> loadFullName() async {
-    fullName.value = await secureStorage.read(
-          key: 'fullName',
-        ) ??
-        '';
+    fullName.value = await secureStorage.read(key: 'fullName') ?? '';
   }
 
   Future<void> loadUserName() async {
-    userName.value = await secureStorage.read(
-          key: 'userName',
-        ) ??
-        '';
+    userName.value = await secureStorage.read(key: 'userName') ?? '';
+  }
+
+  // ADD THIS
+  Future<void> loadUserManagementAccess() async {
+    final val = await secureStorage.read(key: 'hasUserMgmtAccess');
+    hasUserMgmtAccess.value = val == 'true';
   }
 
   Future<void> logOut() async {
-    secureStorage.delete(
-      key: 'fullName',
-    );
-    secureStorage.delete(
-      key: 'userName',
-    );
+    secureStorage.delete(key: 'fullName');
+    secureStorage.delete(key: 'userName');
+    secureStorage.delete(key: 'hasUserMgmtAccess'); // ADD THIS
 
-    Get.offAll(
-      () => LoginScreen(),
-    );
+    Get.offAll(() => LoginScreen());
   }
 }
